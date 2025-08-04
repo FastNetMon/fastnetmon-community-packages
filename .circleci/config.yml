@@ -110,9 +110,9 @@ jobs:
       - run: sudo docker exec -it linux_systemd_container /usr/sbin/fastnetmon --configuration_check
       - run: sudo docker exec -it linux_systemd_container /usr/sbin/fastnetmon --version
       - run: sudo docker exec -it linux_systemd_container /usr/bin/fastnetmon_client --help
-  debian11_upgrade_from_repo_version:
+  debian12_upgrade_from_repo_version:
     docker:
-      - image: debian:bullseye
+      - image: debian:bookworm
     steps:
       - run: apt-get update
       - run: apt-get install -y fastnetmon apt-utils
@@ -314,7 +314,7 @@ common_jobs: &common_jobs
         installer_arguments: ""
         resource_class: "arm.large"
         installer_file_name: "installer_arm64"
-    - debian11_upgrade_from_repo_version
+    - debian12_upgrade_from_repo_version
     - build_debian_upstream:
         name: "Debian Sid Upstream"
         docker_image: debian:sid
