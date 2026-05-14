@@ -1,0 +1,69 @@
+name: CI community packages
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # UTC
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_debian_community:
+    name: ${{ matrix.name }}
+    uses: ./.github/workflows/build-debian.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          ### Debian 11 ###
+          - name: Debian 11
+            docker_image: debian:11
+            use_installer: true
+
+          - name: Debian 11 ARM
+            docker_image: debian:11
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
+
+          ### Debian 12 ###
+
+          - name: Debian 12
+            docker_image: debian:12
+            use_installer: true
+
+          - name: Debian 12 ARM
+            docker_image: debian:12
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
+
+          - name: Debian 12 upstream
+            docker_image: debian:12
+            use_install_package: true
+
+          - name: Debian 12 backports
+            docker_image: debian:12
+            use_install_package: true
+            backports_name: bookworm
+
+          - name: Debian 12 upgrade from repo
+            docker_image: debian:12
+            use_install_package: true
+            use_installer: true
+    with:
+        docker_image: ${{ matrix.docker_image }}
+        installer_arguments:  ${{ matrix.installer_arguments || '' }}
+        systemd_prepare_command: ${{ matrix.systemd_prepare_command || 'true' }}
+        mount_cgroup_command: ${{ matrix.mount_cgroup_command || ''}}
+        installer_file_name: ${{ matrix.installer_file_name || 'installer' }}
+        runner: ${{ matrix.runner || 'ubuntu-24.04' }}
+        enable_ipv6: ${{ matrix.enable_ipv6 || false }}
+        use_installer: ${{ matrix.use_installer || false }}
+        installer_visual_stack: $${{ matrix.installer_visual_stack || false }}
+        use_install_package: ${{ matrix.use_install_package || false }}
+        backports_name: ${{ matrix.backports_name || '' }}
