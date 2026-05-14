@@ -64,6 +64,6 @@ jobs:
         runner: ${{ matrix.runner || 'ubuntu-24.04' }}
         enable_ipv6: ${{ matrix.enable_ipv6 || false }}
         use_installer: ${{ matrix.use_installer || false }}
-        installer_visual_stack: $${{ matrix.installer_visual_stack || false }}
+        installer_visual_stack: ${{ matrix.installer_visual_stack || false }}
         use_install_package: ${{ matrix.use_install_package || false }}
         backports_name: ${{ matrix.backports_name || '' }}
