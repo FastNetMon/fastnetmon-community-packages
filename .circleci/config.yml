@@ -239,24 +239,24 @@ common_jobs: &common_jobs
     #- build_debian:
     #    name: "Debian 10"
     #    docker_image: debian:buster
-    - build_debian:
-        name: "Debian 11"
-        docker_image: debian:bullseye
-    - build_debian:
-        name: "Debian 11 ARM64"
-        docker_image: debian:bullseye
-        installer_arguments: ""
-        resource_class: "arm.large"
-        installer_file_name: "installer_arm64"
-    - build_debian:
-        name: "Debian 12"
-        docker_image: debian:bookworm
-    - build_debian:
-        name: "Debian 12 ARM64"
-        docker_image: debian:bookworm
-        installer_arguments: ""
-        resource_class: "arm.large"
-        installer_file_name: "installer_arm64"
+    #- build_debian:
+    #    name: "Debian 11"
+    #    docker_image: debian:bullseye
+    #- build_debian:
+    #    name: "Debian 11 ARM64"
+    #    docker_image: debian:bullseye
+    #    installer_arguments: ""
+    #    resource_class: "arm.large"
+    #    installer_file_name: "installer_arm64"
+    #- build_debian:
+    #    name: "Debian 12"
+    #    docker_image: debian:bookworm
+    #- build_debian:
+    #    name: "Debian 12 ARM64"
+    #    docker_image: debian:bookworm
+    #    installer_arguments: ""
+    #    resource_class: "arm.large"
+    #    installer_file_name: "installer_arm64"
     # We do not produce latest packages for it
     - build_debian:
         name: "Ubuntu 16.04"
@@ -318,17 +318,17 @@ common_jobs: &common_jobs
     - build_debian_upstream:
         name: "Debian Sid Upstream"
         docker_image: debian:sid
-    - build_debian_upstream:
-        name: "Debian Bookworm 12 Upstream"
-        docker_image: debian:bookworm
+    #- build_debian_upstream:
+    #    name: "Debian Bookworm 12 Upstream"
+    #    docker_image: debian:bookworm
     #- build_debian_backports:
     #    name: "Debian 11 backports"
     #    docker_image: debian:bullseye
     #    debian_codename: "bullseye"
-    - build_debian_backports:
-        name: "Debian 12 backports"
-        docker_image: debian:bookworm
-        debian_codename: "bookworm"
+    #- build_debian_backports:
+    #    name: "Debian 12 backports"
+    #    docker_image: debian:bookworm
+    #    debian_codename: "bookworm"
     - build_debian:
         name: "Kali Linux Rolling"
         docker_image: kalilinux/kali-rolling
@@ -343,19 +343,19 @@ common_jobs: &common_jobs
         docker_image: almalinux:9
 
 # We have two different workflows to trigger same tasks on commit and nightly
-workflows:
-  version: 2
-  all_distros_nightly:
-    jobs:
-      *common_jobs
-    triggers:
-      - schedule:
-          cron: "30 2 * * *"
-          filters:
-            branches:
-              only:
-                - master
-  all_distros:
-    jobs:
-      *common_jobs
+#workflows:
+#  version: 2
+#  all_distros_nightly:
+#    jobs:
+#      *common_jobs
+#    triggers:
+#      - schedule:
+#          cron: "30 2 * * *"
+#          filters:
+#            branches:
+#              only:
+#                - master
+# # all_distros:
+ #   jobs:
+ #     *common_jobs
  
