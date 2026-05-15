@@ -55,6 +55,80 @@ jobs:
             docker_image: debian:12
             use_install_package: true
             use_installer: true
+
+          ### Debian 13 ###
+
+          - name: Debian 13
+            docker_image: debian:13
+            use_installer: true
+
+          - name: Debian 13 ARM
+            docker_image: debian:13
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
+
+          - name: Debian 13 upstream
+            docker_image: debian:13
+            use_install_package: true
+
+          - name: Debian 13 upgrade from repo
+            docker_image: debian:13
+            use_install_package: true
+            use_installer: true
+
+          ### Debian Sid ###
+          - name: Debian Sid upstream
+            docker_image: debian:sid
+            use_install_package: true
+
+          - name: Kali Linux Rolling
+            docker_image: kalilinux/kali-rolling
+            use_installer: true
+
+          # We use older verison as it has support for Cgroups v1
+          - name: Ubuntu 16.04
+            docker_image: ubuntu:16.04
+            use_install_package: true
+            runner: ubuntu-22.04
+
+          - name: Ubuntu 18.04
+            docker_image: ubuntu:18.04
+            use_install_package: true
+            runner: ubuntu-22.04
+
+          ### Ubuntu 20.04 ###
+          - name: Ubuntu 20.04
+            docker_image: ubuntu:20.04
+            use_installer: true
+
+          - name: Ubuntu 20.04 ARM
+            docker_image: ubuntu:20.04
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
+
+          ### Ubuntu 22.04 ###
+          - name: Ubuntu 22.04
+            docker_image: ubuntu:22.04
+            use_installer: true
+
+          - name: Ubuntu 22.04 ARM
+            docker_image: ubuntu:22.04
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
+
+          ### Ubuntu 24.04 ###
+          - name: Ubuntu 24.04
+            docker_image: ubuntu:24.04
+            use_installer: true
+
+          - name: Ubuntu 24.04 ARM
+            docker_image: ubuntu:24.04
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
     with:
         docker_image: ${{ matrix.docker_image }}
         installer_arguments:  ${{ matrix.installer_arguments || '' }}
@@ -67,3 +141,43 @@ jobs:
         installer_visual_stack: ${{ matrix.installer_visual_stack || false }}
         use_install_package: ${{ matrix.use_install_package || false }}
         backports_name: ${{ matrix.backports_name || '' }}
+
+  build_rhel_community:
+    name: ${{ matrix.name }}
+    uses: ./.github/workflows/build-redhat.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: AlmaLinux 8
+            docker_image: almalinux:8
+            use_installer: true
+
+          - name: AlmaLinux 8 ARM
+            docker_image: almalinux:8
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
+
+          - name: AlmaLinux 9
+            docker_image: almalinux:9
+            use_installer: true
+
+          - name: AlmaLinux 9 ARM
+            docker_image: almalinux:9
+            use_installer: true
+            installer_file_name: "installer_arm64"
+            runner: ubuntu-24.04-arm
+        
+    with:
+        docker_image: ${{ matrix.docker_image }}
+        installer_arguments:  ${{ matrix.installer_arguments || '' }}
+        systemd_prepare_command: ${{ matrix.systemd_prepare_command || 'true' }}
+        mount_cgroup_command: ${{ matrix.mount_cgroup_command || ''}}
+        installer_file_name: ${{ matrix.installer_file_name || 'installer' }}
+        runner: ${{ matrix.runner || 'ubuntu-24.04' }}
+        enable_ipv6: ${{ matrix.enable_ipv6 || false }}
+        use_installer: ${{ matrix.use_installer || false }}
+        installer_visual_stack: ${{ matrix.installer_visual_stack || false }}
+        use_install_package: ${{ matrix.use_install_package || false }}
+        packet_manager: ${{ matrix.packet_manager || 'yum'}}
