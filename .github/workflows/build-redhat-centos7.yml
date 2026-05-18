@@ -1,4 +1,4 @@
-name: build-rhel-community
+name: build-rhel-community-centos7
 
 
 on:
@@ -70,40 +70,16 @@ jobs:
     - run: sudo docker run -d --privileged --cap-add SYS_ADMIN ${{ inputs.mount_cgroup_command }} --name linux_systemd_container ${{ inputs.docker_image }} /sbin/init
 
     - run: sudo docker ps -a
-    - run: sleep 10
-    - name: Wait for container to start
-      run: |
-        sudo docker exec linux_systemd_container bash -lc '
-        state="$(systemctl is-system-running --wait || true)"
-        echo "Systemd state: $state"
-        case "$state" in
-          running|degraded)
-            exit 0
-            ;;
-          # For older systemd (ubuntu 18/rhel 8)
-          initializing|starting)
-            sleep 3
-            ;;
-          *)
-            exit 1
-            ;;
-        esac
-        '
-    - run: sudo docker exec linux_systemd_container systemctl status --no-pager
+    - run: sleep 25
+
+
+    
+    - run: sudo docker exec linux_systemd_container sed -i '/mirrorlist/d' /etc/yum.repos.d/CentOS-Base.repo
+    - run: sudo docker exec linux_systemd_container sed -i 's/#baseurl/baseurl/' /etc/yum.repos.d/CentOS-Base.repo
+    - run: sudo docker exec linux_systemd_container sed -i 's/mirror.centos.org/vault.centos.org/' /etc/yum.repos.d/CentOS-Base.repo
 
 
     - run: sudo docker exec linux_systemd_container ${{ inputs.packet_manager}} install -y which
-
-    - name: Add epel repo
-      if: ${{ inputs.use_install_package }}
-      run: |
-        sudo docker exec linux_systemd_container ${{ inputs.packet_manager}} install -y dnf-plugins-core
-        sudo docker exec linux_systemd_container ${{ inputs.packet_manager}} config-manager --set-enabled crb
-        sudo docker exec linux_systemd_container ${{ inputs.packet_manager}}  install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm 
-    - run: sudo docker exec linux_systemd_container  ${{ inputs.packet_manager}}  install -y fastnetmon
-      if: ${{ inputs.use_install_package}}
-    - run: sudo docker exec linux_systemd_container systemctl start fastnetmon
-      if: ${{ inputs.use_install_package}}
 
     ## Install via installer ##
     - run: sudo docker exec linux_systemd_container ${{ inputs.packet_manager}} install -y wget
@@ -132,7 +108,6 @@ jobs:
     - run: sudo docker exec linux_systemd_container ldd "$FASTNETMON_API_CLIENT_BIN"
     - name: Sleep to give enough time for FastNetMon to start
       run: sleep 25
-    - run: sudo docker exec linux_systemd_container systemctl status fastnetmon  --no-pager
     - run: sudo docker exec linux_systemd_container fastnetmon --configuration_check --log_to_console
     - run: sudo docker exec linux_systemd_container fastnetmon --version
     - run: sudo docker exec linux_systemd_container fastnetmon_client --help
