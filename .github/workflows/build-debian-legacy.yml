@@ -1,0 +1,110 @@
+name: build-debian-community-legacy
+
+
+on:
+  workflow_call:
+    inputs:
+      docker_image:
+        type: string
+        required: true
+      installer_arguments:
+        type: string
+        default: ""
+      systemd_prepare_command:
+        type: string
+        default: "true"
+      # We need it as official upstream packages use another path
+      #fastnetmon_daemon_path:
+      #  type: string
+      #  default: "/usr/bin/fastnetmon"
+      runner:
+        type: string
+        default: ubuntu-24.04
+      installer_file_name:
+        type: string
+        default: installer
+      mount_cgroup_command:
+        type: string
+        default: ""
+      use_install_package:
+        type: boolean
+        default: false
+      use_installer:
+        type: boolean
+        default: false
+      installer_visual_stack:
+        type: boolean
+        default: false
+      no_systemd:
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ${{ inputs.runner }}
+    steps:
+    - name: Show environment
+      run: |
+        uname -a
+        uname -m
+        docker version
+        docker network inspect bridge
+    - name: Generate Dockerfile
+      run: | 
+        cat > Dockerfile <<EOF
+        FROM ${{ inputs.docker_image }}
+        ENV DEBIAN_FRONTEND=noninteractive
+        RUN ${{ inputs.systemd_prepare_command }}
+        RUN apt-get update; apt-get install -y systemd systemd-sysv
+        CMD ["/lib/systemd/systemd"]
+        EOF
+    - name: Build image
+      run: cat Dockerfile | sudo docker build --tag debian_systemd -
+
+    - name: "Deploy new systemd enabled image"
+      run: sudo docker run -d --privileged --cap-add SYS_ADMIN ${{ inputs.mount_cgroup_command }} --name linux_systemd_container debian_systemd /lib/systemd/systemd
+    - run: sudo docker ps -a
+    # Too old - not check systemd --wait and status
+    - run: sleep 25
+
+
+    - run: sudo docker exec linux_systemd_container apt-get update
+
+    ## Install via apt install fastnetmon ##
+    - run: sudo docker exec linux_systemd_container apt-get install $ENABLE_BACKPORTS -y fastnetmon
+      if: ${{ inputs.use_install_package}}
+
+    ## Install via installer ##
+    - run: sudo docker exec linux_systemd_container apt install -y wget net-tools
+      if: ${{ inputs.use_installer}}
+    - run: sudo docker exec linux_systemd_container wget --no-verbose "https://install.fastnetmon.com/${{ inputs.installer_file_name }}?random-argument-to-disable-caching-${{ github.run_id }}" -Oinstaller
+      if: ${{ inputs.use_installer}}
+    - run: sudo docker exec linux_systemd_container chmod +x installer
+      if: ${{ inputs.use_installer}}
+    - name: Install community 
+      if: ${{ inputs.use_installer}}
+      run: sudo docker exec --env "CI=true" linux_systemd_container ./installer -install_community_edition
+    - name: Install community visual stack
+      if: ${{ inputs.use_installer && inputs.installer_visual_stack}}
+      run: sudo docker exec --env "CI=true" linux_systemd_container ./installer -install_graphic_stack_community
+
+
+    # We run it, since with Debian 13 with installer we install upstream and need this start too
+    - run: sudo docker exec linux_systemd_container systemctl start fastnetmon
+      if: ${{ !inputs.no_systemd }}
+
+    ## Find path for ldd and do checks
+    - name: Find FastNetMon binaries
+      run: |
+        echo "FASTNETMON_BIN=$(sudo docker exec linux_systemd_container which fastnetmon)" >> "$GITHUB_ENV"
+        echo "FASTNETMON_CLIENT_BIN=$(sudo docker exec linux_systemd_container which fastnetmon_client)" >> "$GITHUB_ENV"
+    - run: sudo docker exec linux_systemd_container ldd "$FASTNETMON_BIN"
+    - run: sudo docker exec linux_systemd_container ldd "$FASTNETMON_CLIENT_BIN"
+    - name: Sleep to give enough time for FastNetMon to start
+      run: sleep 25
+    - run: sudo docker exec linux_systemd_container systemctl status fastnetmon  --no-pager
+      if: ${{ !inputs.no_systemd }}
+    - run: sudo docker exec linux_systemd_container fastnetmon --version
+    # Not have this flag yet
+    #- run: sudo docker exec linux_systemd_container fastnetmon_client --help
+    - run: sudo docker exec linux_systemd_container dpkg -l | grep fastnetmon
