@@ -86,16 +86,6 @@ jobs:
             docker_image: kalilinux/kali-rolling
             use_installer: true
 
-          # We use older verison as it has support for Cgroups v1
-          - name: Ubuntu 16.04
-            docker_image: ubuntu:16.04
-            use_install_package: true
-            runner: ubuntu-22.04
-
-          - name: Ubuntu 18.04
-            docker_image: ubuntu:18.04
-            use_install_package: true
-            runner: ubuntu-22.04
 
           ### Ubuntu 20.04 ###
           - name: Ubuntu 20.04
@@ -141,6 +131,41 @@ jobs:
         installer_visual_stack: ${{ matrix.installer_visual_stack || false }}
         use_install_package: ${{ matrix.use_install_package || false }}
         backports_name: ${{ matrix.backports_name || '' }}
+
+  build_debian_community_legacy:
+    name: ${{ matrix.name }}
+    uses: ./.github/workflows/build-debian-legacy.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # We use older verison as it has support for Cgroups v1
+          - name: Ubuntu 16.04
+            docker_image: ubuntu:16.04
+            use_installer: true
+            runner: ubuntu-22.04
+            no_systemd: true
+
+          - name: Ubuntu 18.04
+            docker_image: ubuntu:18.04
+            use_installer: true
+            runner: ubuntu-22.04
+
+          - name: Ubuntu 18.04 upstream
+            docker_image: ubuntu:18.04
+            use_install_package: true
+            runner: ubuntu-22.04
+    with:
+        docker_image: ${{ matrix.docker_image }}
+        installer_arguments:  ${{ matrix.installer_arguments || '' }}
+        systemd_prepare_command: ${{ matrix.systemd_prepare_command || 'true' }}
+        mount_cgroup_command: ${{ matrix.mount_cgroup_command || ''}}
+        installer_file_name: ${{ matrix.installer_file_name || 'installer' }}
+        runner: ${{ matrix.runner || 'ubuntu-24.04' }}
+        use_installer: ${{ matrix.use_installer || false }}
+        installer_visual_stack: ${{ matrix.installer_visual_stack || false }}
+        use_install_package: ${{ matrix.use_install_package || false }}
+        no_systemd: ${{ matrix.no_systemd || false }}
 
   build_rhel_community:
     name: ${{ matrix.name }}
